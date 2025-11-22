@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2024 MusicScope
+# SPDX - License - Identifier: MIT
+# Copyright (c) 2025 Perday CatalogLAB™
 
 """
 Performance benchmarking for bulk upsert operations.
 
 This module provides comprehensive benchmarking capabilities to measure and track
 the performance of bulk upsert operations, demonstrating quantifiable improvements
-and production-ready performance characteristics.
+and production - ready performance characteristics.
 """
 
 from __future__ import annotations
@@ -75,10 +75,14 @@ class PerformanceTracker:
             "avg_time_ms": statistics.mean(times),
             "median_time_ms": statistics.median(times),
             "p95_time_ms": (
-                statistics.quantiles(times, n=20)[18] if len(times) >= 20 else max(times)
+                statistics.quantiles(times, n=20)[18]
+                if len(times) >= 20
+                else max(times)
             ),
             "p99_time_ms": (
-                statistics.quantiles(times, n=100)[98] if len(times) >= 100 else max(times)
+                statistics.quantiles(times, n=100)[98]
+                if len(times) >= 100
+                else max(times)
             ),
             "min_time_ms": min(times),
             "max_time_ms": max(times),
@@ -91,7 +95,7 @@ class PerformanceTracker:
 
     def get_all_stats(self) -> dict[str, dict[str, float]]:
         """Get stats for all tracked operations."""
-        return {op: self.get_stats(op) for op in self.metrics.keys()}
+        return {op: self.get_stats(op) for op in self.metrics}
 
 
 def create_benchmark_tables(engine: Engine) -> dict[str, Table]:
@@ -148,7 +152,14 @@ def generate_test_data(count: int, data_type: str = "users") -> list[dict[str, A
         return f"{random_string(8)}@{random.choice(domains)}"
 
     if data_type == "users":
-        departments = ["Development", "Sales", "Marketing", "HR", "Finance", "Operations"]
+        departments = [
+            "Development",
+            "Sales",
+            "Marketing",
+            "HR",
+            "Finance",
+            "Operations",
+        ]
         return [
             {
                 "name": f"{random_string(5)} {random_string(7)}",
@@ -198,7 +209,7 @@ def benchmark_bulk_upsert(
     for batch_size in batch_sizes:
         operation_name = f"bulk_upsert_{batch_size}_rows"
 
-        for i in range(iterations):
+        for _i in range(iterations):
             # Generate fresh test data for each iteration
             test_data = generate_test_data(batch_size, "users")
 
@@ -234,13 +245,13 @@ def benchmark_get_or_create(
     for op_count in operation_counts:
         operation_name = f"get_or_create_{op_count}_ops"
 
-        # Pre-populate some data for mixed new/existing scenarios
+        # Pre - populate some data for mixed new / existing scenarios
         existing_data = generate_test_data(op_count // 2, "categories")
         with engine.begin() as conn:
             for data in existing_data:
                 get_or_create(conn, table, **data)
 
-        for i in range(iterations):
+        for _i in range(iterations):
             # Mix of new and existing data
             test_data = generate_test_data(op_count, "categories")
             # Replace half with existing data to test cache hits
@@ -256,7 +267,9 @@ def benchmark_get_or_create(
                         ids.append(category_id)
 
             # Verify all operations succeeded
-            assert len(ids) == op_count, f"Get-or-create failed for {op_count} operations"
+            assert (
+                len(ids) == op_count
+            ), f"Get - or - create failed for {op_count} operations"
             assert all(isinstance(id_val, int) and id_val > 0 for id_val in ids)
 
         # Clean up between operation counts
@@ -285,7 +298,7 @@ def benchmark_batch_get_or_create(
     for batch_size in batch_sizes:
         operation_name = f"batch_get_or_create_{batch_size}_rows"
 
-        for i in range(iterations):
+        for _i in range(iterations):
             # Generate test data
             test_data = generate_test_data(batch_size, "categories")
 
@@ -294,7 +307,9 @@ def benchmark_batch_get_or_create(
                     ids = batch_get_or_create(conn, table, test_data)
 
             # Verify operation succeeded
-            assert len(ids) == batch_size, f"Batch get-or-create failed for {batch_size} rows"
+            assert (
+                len(ids) == batch_size
+            ), f"Batch get - or - create failed for {batch_size} rows"
             assert all(isinstance(id_val, int) and id_val > 0 for id_val in ids)
 
         # Clean up between batch sizes
@@ -335,7 +350,9 @@ def benchmark_mixed_workload(
             product_data = generate_test_data(4900, "products")
             # Update category_ids to reference actual created categories
             for product in product_data:
-                product["category_id"] = category_ids[hash(product["sku"]) % len(category_ids)]
+                product["category_id"] = category_ids[
+                    hash(product["sku"]) % len(category_ids)
+                ]
 
             bulk_upsert(engine, products_table, product_data)
 
@@ -366,20 +383,18 @@ def run_benchmarks(database_url: str | None = None) -> dict[str, Any]:
         tables = create_benchmark_tables(engine)
 
         print("📊 Benchmarking bulk upsert operations...")
-        bulk_upsert_results = benchmark_bulk_upsert(engine, tables["users"], tracker, iterations=3)
+        benchmark_bulk_upsert(engine, tables["users"], tracker, iterations=3)
 
         print("📊 Benchmarking get_or_create operations...")
-        get_or_create_results = benchmark_get_or_create(
-            engine, tables["categories"], tracker, iterations=3
-        )
+        benchmark_get_or_create(engine, tables["categories"], tracker, iterations=3)
 
         print("📊 Benchmarking batch get_or_create operations...")
-        batch_results = benchmark_batch_get_or_create(
+        benchmark_batch_get_or_create(
             engine, tables["categories"], tracker, iterations=3
         )
 
         print("📊 Benchmarking mixed ETL workload...")
-        mixed_results = benchmark_mixed_workload(engine, tables, tracker)
+        benchmark_mixed_workload(engine, tables, tracker)
 
         # Compile comprehensive results
         all_stats = tracker.get_all_stats()
@@ -393,7 +408,9 @@ def run_benchmarks(database_url: str | None = None) -> dict[str, Any]:
             # Key performance metrics for resume
             "bulk_upsert_throughput": bulk_upsert_10k.get("avg_throughput_ops_sec", 0),
             "bulk_upsert_p95_latency_ms": bulk_upsert_10k.get("p95_time_ms", 0),
-            "get_or_create_throughput": get_or_create_2k.get("avg_throughput_ops_sec", 0),
+            "get_or_create_throughput": get_or_create_2k.get(
+                "avg_throughput_ops_sec", 0
+            ),
             "get_or_create_p95_latency_ms": get_or_create_2k.get("p95_time_ms", 0),
             "mixed_workload_total_time_ms": mixed_workload.get("avg_time_ms", 0),
             "mixed_workload_memory_mb": mixed_workload.get("max_memory_mb", 0),
@@ -408,21 +425,25 @@ def run_benchmarks(database_url: str | None = None) -> dict[str, Any]:
             },
         }
 
-        # Print resume-worthy summary
+        # Print resume - worthy summary
         print("\n🎯 PERFORMANCE SUMMARY (Resume Metrics)")
         print("=" * 50)
-        print(f"✅ Bulk Upsert: {summary['bulk_upsert_throughput']:,.0f} rows/sec")
+        print(f"✅ Bulk Upsert: {summary['bulk_upsert_throughput']:,.0f} rows / sec")
         print(f"✅ P95 Latency: {summary['bulk_upsert_p95_latency_ms']:.1f}ms")
-        print(f"✅ Get-or-Create: {summary['get_or_create_throughput']:,.0f} ops/sec")
+        print(
+            f"✅ Get - or - Create: {summary['get_or_create_throughput']:,.0f} ops / sec"
+        )
         print(
             f"✅ Mixed ETL Workload: {summary['mixed_workload_total_time_ms']:,.0f}ms for 10K operations"
         )
-        print(f"✅ Memory Efficiency: {summary['mixed_workload_memory_mb']:.1f}MB peak usage")
+        print(
+            f"✅ Memory Efficiency: {summary['mixed_workload_memory_mb']:.1f}MB peak usage"
+        )
 
         # Performance quality gates
         quality_gates = {
-            "bulk_upsert_min_throughput": 5000,  # 5K rows/sec
-            "get_or_create_min_throughput": 1000,  # 1K ops/sec
+            "bulk_upsert_min_throughput": 5000,  # 5K rows / sec
+            "get_or_create_min_throughput": 1000,  # 1K ops / sec
             "p95_latency_max_ms": 5000,  # 5 second max
             "memory_max_mb": 500,  # 500MB max
         }
@@ -430,17 +451,23 @@ def run_benchmarks(database_url: str | None = None) -> dict[str, Any]:
         passed_gates = 0
         total_gates = len(quality_gates)
 
-        if summary["bulk_upsert_throughput"] >= quality_gates["bulk_upsert_min_throughput"]:
+        if (
+            summary["bulk_upsert_throughput"]
+            >= quality_gates["bulk_upsert_min_throughput"]
+        ):
             passed_gates += 1
             print("✅ Bulk upsert throughput: PASS")
         else:
             print("❌ Bulk upsert throughput: FAIL")
 
-        if summary["get_or_create_throughput"] >= quality_gates["get_or_create_min_throughput"]:
+        if (
+            summary["get_or_create_throughput"]
+            >= quality_gates["get_or_create_min_throughput"]
+        ):
             passed_gates += 1
-            print("✅ Get-or-create throughput: PASS")
+            print("✅ Get - or - create throughput: PASS")
         else:
-            print("❌ Get-or-create throughput: FAIL")
+            print("❌ Get - or - create throughput: FAIL")
 
         if summary["bulk_upsert_p95_latency_ms"] <= quality_gates["p95_latency_max_ms"]:
             passed_gates += 1
@@ -470,7 +497,9 @@ def run_benchmarks(database_url: str | None = None) -> dict[str, Any]:
         engine.dispose()
 
 
-def save_benchmark_results(results: dict[str, Any], filename: str = "benchmark_results.json"):
+def save_benchmark_results(
+    results: dict[str, Any], filename: str = "benchmark_results.json"
+):
     """Save benchmark results to JSON file for analysis."""
     with open(filename, "w") as f:
         json.dump(results, f, indent=2, default=str)

@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2024 MusicScope
+# SPDX - License - Identifier: MIT
+# Copyright (c) 2025 Perday CatalogLAB™
 
 """
-Benchmark tests for bulk upsert operations using pytest-benchmark.
+Benchmark tests for bulk upsert operations using pytest - benchmark.
 
 These benchmarks measure performance and memory usage of upsert operations
 across different scenarios and data sizes.
@@ -13,10 +13,9 @@ import time
 from typing import Any
 
 import pytest
+from bulk_upsert_helpers.upsert import bulk_upsert, postgres_bulk_upsert
 from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.orm import declarative_base
-
-from bulk_upsert_helpers.upsert import bulk_upsert, postgres_bulk_upsert
 
 Base = declarative_base()
 
@@ -34,7 +33,7 @@ class TestUser(Base):
 def mysql_engine():
     """MySQL test engine - requires MySQL running locally."""
     try:
-        engine = create_engine("mysql+pymysql://root@localhost/test_bulk_upsert")
+        engine = create_engine("mysql+pymysql://root@localhost / test_bulk_upsert")
         Base.metadata.create_all(engine)
         yield engine
         Base.metadata.drop_all(engine)
@@ -46,7 +45,7 @@ def mysql_engine():
 def postgres_engine():
     """PostgreSQL test engine - requires PostgreSQL running locally."""
     try:
-        engine = create_engine("postgresql://postgres@localhost/test_bulk_upsert")
+        engine = create_engine("postgresql://postgres@localhost / test_bulk_upsert")
         Base.metadata.create_all(engine)
         yield engine
         Base.metadata.drop_all(engine)
@@ -61,7 +60,7 @@ def sample_rows_1k():
         {
             "name": f"User {i}",
             "email": f"user{i}@example.com",
-            "status": "active" if i % 2 == 0 else "inactive"
+            "status": "active" if i % 2 == 0 else "inactive",
         }
         for i in range(1000)
     ]
@@ -74,7 +73,7 @@ def sample_rows_10k():
         {
             "name": f"User {i}",
             "email": f"user{i}@example.com",
-            "status": "active" if i % 2 == 0 else "inactive"
+            "status": "active" if i % 2 == 0 else "inactive",
         }
         for i in range(10000)
     ]
@@ -122,7 +121,9 @@ class TestBulkUpsertBenchmarks:
         assert result.attempted_rows == 10000
         assert result.affected_rows > 0
 
-    def test_postgres_bulk_upsert_1k_rows(self, benchmark, postgres_engine, sample_rows_1k):
+    def test_postgres_bulk_upsert_1k_rows(
+        self, benchmark, postgres_engine, sample_rows_1k
+    ):
         """Benchmark PostgreSQL bulk upsert with 1K rows."""
         table = TestUser.__table__
 
@@ -135,7 +136,7 @@ class TestBulkUpsertBenchmarks:
                 postgres_engine,
                 table,
                 sample_rows_1k,
-                conflict_columns=["email"]
+                conflict_columns=["email"],
             )
         finally:
             gc.enable()
@@ -147,14 +148,11 @@ class TestBulkUpsertBenchmarks:
         """Benchmark MySQL upsert with mostly updates (existing data)."""
         table = TestUser.__table__
 
-        # Pre-populate with existing data
+        # Pre - populate with existing data
         bulk_upsert(mysql_engine, table, sample_rows_1k)
 
         # Modify data for updates
-        update_rows = [
-            {**row, "status": "updated"}
-            for row in sample_rows_1k
-        ]
+        update_rows = [{**row, "status": "updated"} for row in sample_rows_1k]
 
         warmup_operation(mysql_engine, table, update_rows[:10])
 
@@ -182,7 +180,7 @@ class TestBulkUpsertBenchmarks:
                 mysql_engine,
                 table,
                 sample_rows_1k,
-                batch_size=100  # Smaller batches
+                batch_size=100,  # Smaller batches
             )
         finally:
             gc.enable()
@@ -213,7 +211,7 @@ class TestMemoryBenchmarks:
         snapshot2 = tracemalloc.take_snapshot()
 
         # Calculate memory difference
-        top_stats = snapshot2.compare_to(snapshot1, 'lineno')
+        top_stats = snapshot2.compare_to(snapshot1, "lineno")
         total_memory_mb = sum(stat.size_diff for stat in top_stats) / 1024 / 1024
 
         tracemalloc.stop()
@@ -222,7 +220,9 @@ class TestMemoryBenchmarks:
         assert total_memory_mb < 100
         assert result.attempted_rows == 10000
 
-        print(f"Memory usage: {total_memory_mb:.2f} MB for {result.attempted_rows} rows")
+        print(
+            f"Memory usage: {total_memory_mb:.2f} MB for {result.attempted_rows} rows"
+        )
 
 
 def test_performance_regression_guard(mysql_engine, sample_rows_1k):
@@ -240,7 +240,9 @@ def test_performance_regression_guard(mysql_engine, sample_rows_1k):
     duration_ms = (end_time - start_time) / 1_000_000
     ops_per_second = result.attempted_rows / (duration_ms / 1000)
 
-    # Should process at least 1000 ops/second (adjust based on your requirements)
-    assert ops_per_second > 1000, f"Performance regression: {ops_per_second:.0f} ops/sec"
+    # Should process at least 1000 ops / second (adjust based on your requirements)
+    assert (
+        ops_per_second > 1000
+    ), f"Performance regression: {ops_per_second:.0f} ops / sec"
 
-    print(f"Performance: {ops_per_second:.0f} ops/sec, {duration_ms:.1f}ms total")
+    print(f"Performance: {ops_per_second:.0f} ops / sec, {duration_ms:.1f}ms total")

@@ -1,5 +1,5 @@
 <!-- SPDX-License-Identifier: MIT
-Copyright (c) 2024 Perday Labs -->
+Copyright (c) 2025 Perday Labs -->
 
 # Contributing to Bulk Upsert Helpers
 

@@ -1,5 +1,5 @@
 <!-- SPDX-License-Identifier: MIT
-Copyright (c) 2024 MusicScope -->
+Copyright (c) 2025 Perday CatalogLAB™ -->
 
 # Changelog
 
@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced type hints throughout codebase
 - Better memory management with configurable batch sizes
 
-## [0.1.0] - 2024-09-24
+## [0.1.0] - 2025-09-24
 
 ### Added
 - **Core functionality extracted from production ETL systems**

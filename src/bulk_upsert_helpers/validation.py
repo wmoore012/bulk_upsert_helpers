@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2024 MusicScope
+# SPDX - License - Identifier: MIT
+# Copyright (c) 2025 Perday CatalogLAB™
 
 """
 Input validation utilities for professional error handling.
@@ -33,7 +33,7 @@ def validate_not_none(value: Any, field_name: str) -> Any:
     """
     if value is None:
         raise ValidationError(
-            field_name, value, "non-None value", f"Provide a valid {field_name} value"
+            field_name, value, "non - None value", f"Provide a valid {field_name} value"
         )
     return value
 
@@ -63,7 +63,10 @@ def validate_string(
     """
     if not isinstance(value, str):
         raise ValidationError(
-            field_name, value, "string", f"Convert {field_name} to string or provide string input"
+            field_name,
+            value,
+            "string",
+            f"Convert {field_name} to string or provide string input",
         )
 
     if len(value) < min_length:
@@ -119,10 +122,7 @@ def validate_number(
         ValidationError: If validation fails
     """
     try:
-        if number_type == int:
-            validated_value = int(value)
-        else:
-            validated_value = float(value)
+        validated_value = int(value) if number_type == int else float(value)
     except (ValueError, TypeError):
         raise ValidationError(
             field_name,
@@ -133,7 +133,10 @@ def validate_number(
 
     if not allow_zero and validated_value == 0:
         raise ValidationError(
-            field_name, value, "non-zero number", f"Provide a non-zero value for {field_name}"
+            field_name,
+            value,
+            "non - zero number",
+            f"Provide a non - zero value for {field_name}",
         )
 
     if min_value is not None and validated_value < min_value:
@@ -174,7 +177,10 @@ def validate_path(value: Any, field_name: str, must_exist: bool = False) -> Path
         path = Path(value)
     except (TypeError, ValueError):
         raise ValidationError(
-            field_name, value, "valid file path", f"Provide a valid path string for {field_name}"
+            field_name,
+            value,
+            "valid file path",
+            f"Provide a valid path string for {field_name}",
         )
 
     if must_exist and not path.exists():

@@ -7,6 +7,13 @@
 
 High-performance bulk database operations with intelligent batching and error recovery
 
+**Repo:** https://github.com/wmoore012/bulk-upsert-helpers
+**What it does:** Wraps SQLAlchemy upserts with batching, retries, and safety rails so DSP refresh jobs can move tens of thousands of rows quickly without corrupting data.
+
+## 🙋‍♂️ Why I Built It
+
+CatalogLAB needs to push Spotify/Tidal/YouTube data into MySQL fast enough that CRM dashboards don’t lag a day behind. I open-sourced the exact retry, batching, and SQLAlchemy guardrails I run in production so hiring teams can see how I design resilient ETL primitives. It’s proof I can own both the analytics roadmap and the database plumbing that keeps it trustworthy.
+
 ## 🚀 Performance Highlights
 
 **Processes 100K records in <2 seconds**
@@ -22,8 +29,12 @@ High-performance bulk database operations with intelligent batching and error re
 
 ## 📦 Installation
 
+Install from GitHub:
+
 ```bash
-pip install bulk-upsert-helpers
+git clone https://github.com/wmoore012/bulk-upsert-helpers.git
+cd bulk-upsert-helpers
+pip install -e .
 ```
 
 ## 🔥 Quick Start
@@ -140,6 +151,12 @@ Built by Wilton Moore at Perday Labs for production use. This module demonstrate
 - **DevOps Excellence**: CI/CD, monitoring, and deployment automation
 - **Security Expertise**: Threat modeling and secure coding practices
 - **Quality Assurance**: Comprehensive testing and code review processes
+
+## 📬 Contact
+
+Need fast ETL primitives or want to chat about CatalogLAB? Reach me:
+- LinkedIn: https://www.linkedin.com/in/wiltonmoore/
+- GitHub: https://github.com/wmoore012
 
 ---
 

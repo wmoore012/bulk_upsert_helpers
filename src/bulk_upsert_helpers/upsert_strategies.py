@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2024 Wilton Moore
+# SPDX - License - Identifier: MIT
+# Copyright (c) 2025 Wilton Moore
 
 """
-Database-specific upsert strategies.
+Database - specific upsert strategies.
 
-This module implements the strategy pattern to handle dialect-specific
+This module implements the strategy pattern to handle dialect - specific
 upsert operations, reducing complexity in the main upsert functions.
 """
 
@@ -17,7 +17,7 @@ from sqlalchemy.schema import Table
 
 
 class UpsertStrategy(ABC):
-    """Abstract base class for database-specific upsert strategies."""
+    """Abstract base class for database - specific upsert strategies."""
 
     @abstractmethod
     def upsert_batch(
@@ -25,21 +25,21 @@ class UpsertStrategy(ABC):
         conn: Connection,
         table: Table,
         rows: List[Dict[str, Any]],
-        update_cols: List[str]
+        update_cols: List[str],
     ) -> int:
         """Execute a batch upsert and return affected row count."""
         pass
 
 
 class MySQLStrategy(UpsertStrategy):
-    """MySQL-specific upsert using ON DUPLICATE KEY UPDATE."""
+    """MySQL - specific upsert using ON DUPLICATE KEY UPDATE."""
 
     def upsert_batch(
         self,
         conn: Connection,
         table: Table,
         rows: List[Dict[str, Any]],
-        update_cols: List[str]
+        update_cols: List[str],
     ) -> int:
         from sqlalchemy.dialects.mysql import insert as mysql_insert
 
@@ -52,14 +52,14 @@ class MySQLStrategy(UpsertStrategy):
 
 
 class PostgreSQLStrategy(UpsertStrategy):
-    """PostgreSQL-specific upsert using ON CONFLICT DO UPDATE."""
+    """PostgreSQL - specific upsert using ON CONFLICT DO UPDATE."""
 
     def upsert_batch(
         self,
         conn: Connection,
         table: Table,
         rows: List[Dict[str, Any]],
-        update_cols: List[str]
+        update_cols: List[str],
     ) -> int:
         from sqlalchemy.dialects.postgresql import insert as pg_insert
 
@@ -72,8 +72,7 @@ class PostgreSQLStrategy(UpsertStrategy):
 
         up_map = {c: insert_stmt.excluded[c] for c in update_cols}
         stmt = insert_stmt.values(rows).on_conflict_do_update(
-            index_elements=pk_cols,
-            set_=up_map
+            index_elements=pk_cols, set_=up_map
         )
 
         result = conn.execute(stmt)
@@ -88,7 +87,7 @@ class GenericStrategy(UpsertStrategy):
         conn: Connection,
         table: Table,
         rows: List[Dict[str, Any]],
-        update_cols: List[str]
+        update_cols: List[str],
     ) -> int:
         affected = 0
         pk_cols = [c.name for c in table.primary_key.columns]
@@ -106,9 +105,9 @@ class GenericStrategy(UpsertStrategy):
         table: Table,
         row_data: Dict[str, Any],
         update_cols: List[str],
-        pk_cols: List[str]
+        pk_cols: List[str],
     ) -> int:
-        """Upsert a single row using select-then-insert/update pattern."""
+        """Upsert a single row using select - then - insert / update pattern."""
         where_clause = {k: v for k, v in row_data.items() if k in pk_cols}
         if where_clause:
             existing = self._select_existing(conn, table, where_clause)
@@ -121,10 +120,7 @@ class GenericStrategy(UpsertStrategy):
         return 1
 
     def _select_existing(
-        self,
-        conn: Connection,
-        table: Table,
-        where_clause: Dict[str, Any]
+        self, conn: Connection, table: Table, where_clause: Dict[str, Any]
     ) -> Any:
         """Check if a row exists with the given where clause."""
         conditions = [table.c[k] == v for k, v in where_clause.items()]
@@ -137,7 +133,7 @@ class GenericStrategy(UpsertStrategy):
         table: Table,
         row_data: Dict[str, Any],
         update_cols: List[str],
-        where_clause: Dict[str, Any]
+        where_clause: Dict[str, Any],
     ) -> int:
         """Update an existing row."""
         update_data = {k: v for k, v in row_data.items() if k in update_cols}

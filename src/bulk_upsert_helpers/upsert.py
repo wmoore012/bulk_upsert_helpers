@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2024 Wilton Moore
+# SPDX - License - Identifier: MIT
+# Copyright (c) 2025 Wilton Moore
 
 """
-High-performance bulk upsert operations for SQLAlchemy 2.x.
+High - performance bulk upsert operations for SQLAlchemy 2.x.
 
-This module provides dialect-specific bulk upsert functionality with proper
+This module provides dialect - specific bulk upsert functionality with proper
 SQLAlchemy 2.x patterns. Supports MySQL and PostgreSQL with fallback for other databases.
 
 SECURITY FEATURES:
@@ -31,9 +31,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
-from typing import Any, Dict, List, Set
+from typing import Any
 
-from sqlalchemy import func, inspect, insert, select, update
+from sqlalchemy import func, insert, inspect, select
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.schema import Table
 
@@ -50,7 +50,7 @@ class UpsertStats:
     estimated_updates: int
 
     @classmethod
-    def from_mysql_result(cls, affected: int, attempted: int) -> "UpsertStats":
+    def from_mysql_result(cls, affected: int, attempted: int) -> UpsertStats:
         """Create stats from MySQL affected rows (1=insert, 2=update, 0=unchanged)."""
         # Rough estimation: if affected > attempted, some were updates (count as 2)
         if affected <= attempted:
@@ -64,13 +64,13 @@ class UpsertStats:
 
 
 # Strategy registry for dialect dispatch
-UPSERT_STRATEGIES: Dict[str, Any] = {
+UPSERT_STRATEGIES: dict[str, Any] = {
     "mysql": MySQLStrategy(),
     "postgresql": PostgreSQLStrategy(),
 }
 
 
-def resolve_valid_columns(table: Table, rows: List[Dict[str, Any]]) -> Set[str]:
+def resolve_valid_columns(table: Table, rows: list[dict[str, Any]]) -> set[str]:
     """Resolve valid columns from table schema and provided rows."""
     table_cols = {c.name for c in table.columns}
     if not rows:
@@ -80,9 +80,9 @@ def resolve_valid_columns(table: Table, rows: List[Dict[str, Any]]) -> Set[str]:
     return table_cols & provided_cols
 
 
-def detect_conflict_columns(table: Table) -> Set[str]:
+def detect_conflict_columns(table: Table) -> set[str]:
     """Detect unique columns from constraints and indexes."""
-    unique_cols: Set[str] = set()
+    unique_cols: set[str] = set()
 
     # Primary key columns
     pk_cols = {c.name for c in table.primary_key.columns}
@@ -90,7 +90,10 @@ def detect_conflict_columns(table: Table) -> Set[str]:
 
     # UniqueConstraint objects
     for cons in getattr(table, "constraints", set()):
-        if getattr(cons, "unique", False) or cons.__class__.__name__ == "UniqueConstraint":
+        if (
+            getattr(cons, "unique", False)
+            or cons.__class__.__name__ == "UniqueConstraint"
+        ):
             unique_cols.update(col.name for col in cons.columns)
 
     # Unique indexes
@@ -102,10 +105,8 @@ def detect_conflict_columns(table: Table) -> Set[str]:
 
 
 def resolve_update_target(
-    valid_cols: Set[str],
-    conflict_cols: Set[str],
-    update_columns: Iterable[str] | None
-) -> List[str]:
+    valid_cols: set[str], conflict_cols: set[str], update_columns: Iterable[str] | None
+) -> list[str]:
     """Resolve which columns to update on conflict."""
     if update_columns is None:
         # Default: update all valid columns except conflict columns
@@ -114,15 +115,19 @@ def resolve_update_target(
         return [c for c in update_columns if c in valid_cols and c not in conflict_cols]
 
 
-def clean_rows(rows: List[Dict[str, Any]], valid_cols: Set[str]) -> List[Dict[str, Any]]:
+def clean_rows(
+    rows: list[dict[str, Any]], valid_cols: set[str]
+) -> list[dict[str, Any]]:
     """Filter rows to only include valid columns."""
     return [{k: v for k, v in row.items() if k in valid_cols} for row in rows]
 
 
-def iter_batches(rows: List[Dict[str, Any]], batch_size: int) -> Iterator[List[Dict[str, Any]]]:
+def iter_batches(
+    rows: list[dict[str, Any]], batch_size: int
+) -> Iterator[list[dict[str, Any]]]:
     """Iterate over rows in batches of specified size."""
     for i in range(0, len(rows), batch_size):
-        yield rows[i:i + batch_size]
+        yield rows[i : i + batch_size]
 
 
 def bulk_upsert(
@@ -133,12 +138,12 @@ def bulk_upsert(
     batch_size: int = 1000,
 ) -> UpsertStats:
     """
-    Bulk upsert using dialect-specific ON DUPLICATE KEY UPDATE or ON CONFLICT.
+    Bulk upsert using dialect - specific ON DUPLICATE KEY UPDATE or ON CONFLICT.
 
     Args:
         engine: SQLAlchemy Engine instance
         table: SQLAlchemy Table object to insert into
-        rows: List of dictionaries representing rows to insert/update
+        rows: List of dictionaries representing rows to insert / update
         update_columns: Specific columns to update on conflict (optional)
         batch_size: Rows per batch to avoid max_allowed_packet limits (default: 1000)
 
@@ -157,7 +162,7 @@ def bulk_upsert(
         >>> print(f"Processed {stats.attempted_rows}, affected {stats.affected_rows}")
 
     Notes:
-        - Uses dialect-specific upsert: MySQL ON DUPLICATE KEY, PostgreSQL ON CONFLICT
+        - Uses dialect - specific upsert: MySQL ON DUPLICATE KEY, PostgreSQL ON CONFLICT
         - Batches automatically to avoid packet size limits
         - Excludes PK and unique constraint columns from updates
         - MySQL semantics: 1=insert, 2=update, 0=unchanged
@@ -180,12 +185,11 @@ def bulk_upsert(
         for batch in iter_batches(rows, batch_size):
             clean_batch = clean_rows(batch, valid_cols)
             if clean_batch:
-                affected_total += strategy.upsert_batch(conn, table, clean_batch, update_target)
+                affected_total += strategy.upsert_batch(
+                    conn, table, clean_batch, update_target
+                )
 
     return UpsertStats.from_mysql_result(affected_total, len(rows))
-
-
-
 
 
 def postgres_bulk_upsert(
@@ -197,12 +201,12 @@ def postgres_bulk_upsert(
     batch_size: int = 1000,
 ) -> UpsertStats:
     """
-    PostgreSQL-specific bulk upsert using ON CONFLICT DO UPDATE.
+    PostgreSQL - specific bulk upsert using ON CONFLICT DO UPDATE.
 
     Args:
         engine: SQLAlchemy Engine instance
         table: SQLAlchemy Table object to insert into
-        rows: List of dictionaries representing rows to insert/update
+        rows: List of dictionaries representing rows to insert / update
         conflict_columns: Columns that define the conflict (e.g., unique constraint)
         update_columns: Specific columns to update on conflict (optional)
         batch_size: Rows per batch (default: 1000)
@@ -239,10 +243,10 @@ def postgres_bulk_upsert(
 
 
 def _resolve_postgres_update_target(
-    valid_cols: Set[str],
-    conflict_columns: List[str],
-    update_columns: Iterable[str] | None
-) -> List[str]:
+    valid_cols: set[str],
+    conflict_columns: list[str],
+    update_columns: Iterable[str] | None,
+) -> list[str]:
     """Resolve update target columns for PostgreSQL upsert."""
     conflict_set = set(conflict_columns)
 
@@ -255,9 +259,9 @@ def _resolve_postgres_update_target(
 def _execute_postgres_batch(
     conn: Connection,
     table: Table,
-    batch: List[Dict[str, Any]],
-    conflict_columns: List[str],
-    update_target: List[str]
+    batch: list[dict[str, Any]],
+    conflict_columns: list[str],
+    update_target: list[str],
 ) -> int:
     """Execute a single PostgreSQL upsert batch."""
     from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -265,8 +269,7 @@ def _execute_postgres_batch(
     insert_stmt = pg_insert(table)
     up_map = {c: insert_stmt.excluded[c] for c in update_target}
     stmt = insert_stmt.values(batch).on_conflict_do_update(
-        index_elements=conflict_columns,
-        set_=up_map
+        index_elements=conflict_columns, set_=up_map
     )
 
     result = conn.execute(stmt)
@@ -275,13 +278,13 @@ def _execute_postgres_batch(
 
 def get_or_create(conn: Connection, table: Table, **kwargs: Any) -> int:
     """
-    Atomic get-or-create that works with both MySQL and SQLite.
-    Returns the primary-key int for both insert and conflict-update paths.
+    Atomic get - or - create that works with both MySQL and SQLite.
+    Returns the primary - key int for both insert and conflict - update paths.
 
     Args:
         conn: SQLAlchemy Connection instance (must be within a transaction)
-        table: SQLAlchemy Table object to query/insert into
-        **kwargs: Column values to match/insert
+        table: SQLAlchemy Table object to query / insert into
+        **kwargs: Column values to match / insert
 
     Returns:
         Primary key value of the existing or newly created row
@@ -305,7 +308,9 @@ def get_or_create(conn: Connection, table: Table, **kwargs: Any) -> int:
         return _get_or_create_generic(conn, table, pk_col, payload)
 
 
-def _validate_get_or_create_inputs(table: Table, kwargs: Dict[str, Any]) -> tuple[Any, Dict[str, Any]]:
+def _validate_get_or_create_inputs(
+    table: Table, kwargs: dict[str, Any]
+) -> tuple[Any, dict[str, Any]]:
     """Validate inputs for get_or_create operation."""
     pk_cols = list(table.primary_key.columns)
     if len(pk_cols) != 1:
@@ -321,8 +326,10 @@ def _validate_get_or_create_inputs(table: Table, kwargs: Dict[str, Any]) -> tupl
     return pk_col, payload
 
 
-def _get_or_create_mysql(conn: Connection, table: Table, pk_col: Any, payload: Dict[str, Any]) -> int:
-    """MySQL-specific get_or_create using ON DUPLICATE KEY UPDATE."""
+def _get_or_create_mysql(
+    conn: Connection, table: Table, pk_col: Any, payload: dict[str, Any]
+) -> int:
+    """MySQL - specific get_or_create using ON DUPLICATE KEY UPDATE."""
     from sqlalchemy.dialects.mysql import insert as mysql_insert
 
     ins = mysql_insert(table).values(**payload)
@@ -335,8 +342,10 @@ def _get_or_create_mysql(conn: Connection, table: Table, pk_col: Any, payload: D
     return int(new_id)
 
 
-def _get_or_create_sqlite(conn: Connection, table: Table, pk_col: Any, payload: Dict[str, Any]) -> int:
-    """SQLite-specific get_or_create."""
+def _get_or_create_sqlite(
+    conn: Connection, table: Table, pk_col: Any, payload: dict[str, Any]
+) -> int:
+    """SQLite - specific get_or_create."""
     # First try to get existing record
     existing = conn.execute(select(pk_col).filter_by(**payload)).first()
     if existing:
@@ -348,7 +357,9 @@ def _get_or_create_sqlite(conn: Connection, table: Table, pk_col: Any, payload: 
     return int(result.lastrowid)
 
 
-def _get_or_create_generic(conn: Connection, table: Table, pk_col: Any, payload: Dict[str, Any]) -> int:
+def _get_or_create_generic(
+    conn: Connection, table: Table, pk_col: Any, payload: dict[str, Any]
+) -> int:
     """Generic get_or_create for other databases."""
     # First try to get existing record
     existing = conn.execute(select(pk_col).filter_by(**payload)).first()
@@ -417,7 +428,7 @@ def upsert_single(
     """
     Upsert a single row and return the affected row count.
 
-    This is a convenience function for single-row upserts when you don't need
+    This is a convenience function for single - row upserts when you don't need
     the full bulk_upsert functionality.
 
     Args:
@@ -445,8 +456,10 @@ def upsert_single(
     # Get primary key columns for exclusion from updates
     pk_cols = {c.name for c in inspect(table).primary_key}
 
-    # Create update mapping for all non-primary-key columns
-    update_map = {col: insert_stmt.inserted[col] for col in row_data.keys() if col not in pk_cols}
+    # Create update mapping for all non - primary - key columns
+    update_map = {
+        col: insert_stmt.inserted[col] for col in row_data if col not in pk_cols
+    }
 
     # Build the upsert statement
     stmt = insert_stmt.on_duplicate_key_update(**update_map)

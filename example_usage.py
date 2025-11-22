@@ -1,16 +1,24 @@
-#!/usr/bin/env python3
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2024 MusicScope
+#!/usr / bin / env python3
+# SPDX - License - Identifier: MIT
+# Copyright (c) 2025 Perday CatalogLAB™
 
 """
-Simple example demonstrating bulk-upsert-helpers usage.
+Simple example demonstrating bulk - upsert - helpers usage.
 
 Run with: python example_usage.py
-Requires: pip install bulk-upsert-helpers[mysql]
+Requires: pip install bulk - upsert - helpers[mysql]
 """
 
 from bulk_upsert_helpers import bulk_upsert, get_or_create
-from sqlalchemy import Column, Integer, MetaData, String, Table, UniqueConstraint, create_engine
+from sqlalchemy import (
+    Column,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    UniqueConstraint,
+    create_engine,
+)
 
 
 def main():
@@ -46,11 +54,13 @@ def main():
     print("🎵 Music Data Pipeline Example")
     print("=" * 40)
 
-    # Step 1: Get-or-create reference data (labels)
+    # Step 1: Get - or - create reference data (labels)
     with engine.begin() as conn:
         print("\n📋 Creating reference data...")
 
-        sony_id = get_or_create(conn, labels, name="Sony Music Entertainment", country="US")
+        sony_id = get_or_create(
+            conn, labels, name="Sony Music Entertainment", country="US"
+        )
         warner_id = get_or_create(conn, labels, name="Warner Music Group", country="US")
 
         print(f"✅ Sony Music ID: {sony_id}")
@@ -72,7 +82,12 @@ def main():
             "label_id": sony_id,
             "duration_ms": 174000,
         },
-        {"title": "Levitating", "artist": "Dua Lipa", "label_id": warner_id, "duration_ms": 203000},
+        {
+            "title": "Levitating",
+            "artist": "Dua Lipa",
+            "label_id": warner_id,
+            "duration_ms": 203000,
+        },
         {
             "title": "Good 4 U",
             "artist": "Olivia Rodrigo",
@@ -83,12 +98,12 @@ def main():
 
     try:
         # Note: This will fail with SQLite since it doesn't support ON DUPLICATE KEY UPDATE
-        # For real usage, use MySQL: mysql+pymysql://user:pass@host/db
+        # For real usage, use MySQL: mysql+pymysql://user:pass@host / db
         affected = bulk_upsert(engine, tracks, track_data)
         print(f"✅ Processed {affected} track records")
     except Exception as e:
         print(f"ℹ️  Expected error with SQLite: {e}")
-        print("💡 For real usage, use MySQL with: mysql+pymysql://user:pass@host/db")
+        print("💡 For real usage, use MySQL with: mysql+pymysql://user:pass@host / db")
 
         # Fallback: insert manually for demo
         with engine.begin() as conn:

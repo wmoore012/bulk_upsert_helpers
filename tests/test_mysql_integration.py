@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2024 MusicScope
+# SPDX - License - Identifier: MIT
+# Copyright (c) 2025 Perday CatalogLAB™
 
 """
 MySQL integration tests for bulk upsert operations.
@@ -12,7 +12,15 @@ import os
 
 import pytest
 from bulk_upsert_helpers import bulk_upsert, get_or_create
-from sqlalchemy import Column, Integer, MetaData, String, Table, UniqueConstraint, create_engine
+from sqlalchemy import (
+    Column,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    UniqueConstraint,
+    create_engine,
+)
 from sqlalchemy.engine import Engine
 
 
@@ -77,7 +85,9 @@ def test_bulk_upsert_mysql_rowcount_semantics(mysql_engine: Engine, test_table: 
 
     # Verify actual data
     with mysql_engine.begin() as conn:
-        result = conn.execute(test_table.select().order_by(test_table.c.email)).fetchall()
+        result = conn.execute(
+            test_table.select().order_by(test_table.c.email)
+        ).fetchall()
         assert len(result) == 3
 
         # Check the update worked
@@ -87,7 +97,7 @@ def test_bulk_upsert_mysql_rowcount_semantics(mysql_engine: Engine, test_table: 
 
 
 def test_get_or_create_atomic_behavior(mysql_engine: Engine, test_table: Table):
-    """Test that get_or_create is atomic and race-condition safe."""
+    """Test that get_or_create is atomic and race - condition safe."""
 
     with mysql_engine.begin() as conn:
         # First call should create
@@ -184,7 +194,7 @@ def test_bulk_upsert_handles_invalid_columns(mysql_engine: Engine, test_table: T
 
 @pytest.mark.slow
 def test_bulk_upsert_performance_baseline(mysql_engine: Engine, test_table: Table):
-    """Performance baseline test - should process at least 1000 rows/second."""
+    """Performance baseline test - should process at least 1000 rows / second."""
     import time
 
     # Generate test data
@@ -201,6 +211,8 @@ def test_bulk_upsert_performance_baseline(mysql_engine: Engine, test_table: Tabl
     throughput = len(rows) / duration
 
     assert affected == 10000
-    assert throughput >= 1000, f"Performance regression: {throughput:.0f} rows/sec < 1000 rows/sec"
+    assert (
+        throughput >= 1000
+    ), f"Performance regression: {throughput:.0f} rows / sec < 1000 rows / sec"
 
-    print(f"✅ Bulk upsert performance: {throughput:.0f} rows/sec")
+    print(f"✅ Bulk upsert performance: {throughput:.0f} rows / sec")

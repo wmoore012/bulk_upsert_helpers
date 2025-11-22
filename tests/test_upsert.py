@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2024 MusicScope
+# SPDX - License - Identifier: MIT
+# Copyright (c) 2025 Perday CatalogLAB™
 
 """
 Tests for bulk upsert helper functionality.
 
-These tests verify bulk upsert operations, get-or-create functionality,
+These tests verify bulk upsert operations, get - or - create functionality,
 and performance characteristics with various database scenarios.
 """
 
@@ -33,7 +33,7 @@ from sqlalchemy import (
 @pytest.fixture
 def sqlite_engine():
     """Create a temporary SQLite database for testing."""
-    # Create temporary file database (in-memory doesn't work across connections)
+    # Create temporary file database (in - memory doesn't work across connections)
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
         db_path = tmp.name
 
@@ -146,7 +146,9 @@ class TestGetOrCreate:
             assert category_id > 0
 
             # Verify record was created
-            result = conn.execute(select(categories).where(categories.c.id == category_id)).first()
+            result = conn.execute(
+                select(categories).where(categories.c.id == category_id)
+            ).first()
 
             assert result is not None
             assert result.name == "Rock"
@@ -158,10 +160,14 @@ class TestGetOrCreate:
 
         with sqlite_engine.begin() as conn:
             # Create initial record
-            first_id = get_or_create(conn, categories, name="Pop", description="Pop music genre")
+            first_id = get_or_create(
+                conn, categories, name="Pop", description="Pop music genre"
+            )
 
             # Try to create same record again
-            second_id = get_or_create(conn, categories, name="Pop", description="Pop music genre")
+            second_id = get_or_create(
+                conn, categories, name="Pop", description="Pop music genre"
+            )
 
             # Should return same ID
             assert first_id == second_id
@@ -178,12 +184,12 @@ class TestGetOrCreate:
 
         with sqlite_engine.begin() as conn:
             # Create record with specific description
-            first_id = get_or_create(conn, categories, name="Jazz", description="Traditional jazz")
+            get_or_create(conn, categories, name="Jazz", description="Traditional jazz")
 
             # Try to get record with different description but same name
             # This should fail due to unique constraint on name
             with pytest.raises(Exception):  # SQLite will raise IntegrityError
-                second_id = get_or_create(conn, categories, name="Jazz", description="Modern jazz")
+                get_or_create(conn, categories, name="Jazz", description="Modern jazz")
 
     def test_get_or_create_no_primary_key(self, sqlite_engine):
         """Test get_or_create with table that has no primary key."""
@@ -197,7 +203,9 @@ class TestGetOrCreate:
         metadata.create_all(sqlite_engine)
 
         with sqlite_engine.begin() as conn:
-            with pytest.raises(ValueError, match="must have exactly one primary key column"):
+            with pytest.raises(
+                ValueError, match="must have exactly one primary key column"
+            ):
                 get_or_create(conn, no_pk_table, name="test", value="value")
 
     def test_get_or_create_composite_primary_key(self, sqlite_engine):
@@ -216,7 +224,9 @@ class TestGetOrCreate:
         metadata.create_all(sqlite_engine)
 
         with sqlite_engine.begin() as conn:
-            with pytest.raises(ValueError, match="must have exactly one primary key column"):
+            with pytest.raises(
+                ValueError, match="must have exactly one primary key column"
+            ):
                 get_or_create(conn, composite_pk_table, id1=1, id2=2, name="test")
 
 
@@ -246,7 +256,9 @@ class TestBatchGetOrCreate:
 
         with sqlite_engine.begin() as conn:
             # Create one record first
-            existing_id = get_or_create(conn, categories, name="Rock", description="Rock music")
+            existing_id = get_or_create(
+                conn, categories, name="Rock", description="Rock music"
+            )
 
             # Batch with mix of new and existing
             rows = [
@@ -275,7 +287,9 @@ class TestBatchGetOrCreate:
         """Test batch get_or_create with custom batch size."""
         categories = test_tables["categories"]
 
-        rows = [{"name": f"Genre{i}", "description": f"Genre {i} music"} for i in range(10)]
+        rows = [
+            {"name": f"Genre{i}", "description": f"Genre {i} music"} for i in range(10)
+        ]
 
         with sqlite_engine.begin() as conn:
             ids = batch_get_or_create(conn, categories, rows, batch_size=3)
@@ -291,9 +305,10 @@ class TestUpsertSingle:
         """Test upsert_single when MySQL dialect is not available."""
         users = test_tables["users"]
 
-        with sqlite_engine.begin() as conn:
-            with pytest.raises((ImportError, Exception)):
-                upsert_single(conn, users, {"name": "John Doe", "email": "john@example.com"})
+        with sqlite_engine.begin() as conn, pytest.raises((ImportError, Exception)):
+            upsert_single(
+                conn, users, {"name": "John Doe", "email": "john@example.com"}
+            )
 
 
 class TestErrorHandling:
@@ -317,7 +332,7 @@ class TestErrorHandling:
         try:
             with sqlite_engine.begin() as conn:
                 # Create a record
-                category_id = get_or_create(
+                get_or_create(
                     conn, categories, name="Temp", description="Temporary category"
                 )
 
@@ -329,7 +344,9 @@ class TestErrorHandling:
 
         # Verify record was rolled back
         with sqlite_engine.begin() as conn:
-            result = conn.execute(select(categories).where(categories.c.name == "Temp")).first()
+            result = conn.execute(
+                select(categories).where(categories.c.name == "Temp")
+            ).first()
 
             assert result is None
 
@@ -401,7 +418,8 @@ class TestIntegration:
 
         # Create larger dataset
         large_dataset = [
-            {"name": f"Genre{i}", "description": f"Genre {i} description"} for i in range(100)
+            {"name": f"Genre{i}", "description": f"Genre {i} description"}
+            for i in range(100)
         ]
 
         with sqlite_engine.begin() as conn:
@@ -417,4 +435,6 @@ class TestIntegration:
 
             # Performance should be reasonable (less than 1 second for 100 records)
             elapsed_time = end_time - start_time
-            assert elapsed_time < 1.0, f"Operation took {elapsed_time:.2f}s, expected < 1.0s"
+            assert (
+                elapsed_time < 1.0
+            ), f"Operation took {elapsed_time:.2f}s, expected < 1.0s"

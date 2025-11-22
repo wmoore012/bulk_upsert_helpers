@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2024 MusicScope
+# SPDX - License - Identifier: MIT
+# Copyright (c) 2025 Perday CatalogLAB™
 
 """
-Custom exceptions for bulk-upsert-helpers module.
+Custom exceptions for bulk - upsert - helpers module.
 
 This module provides comprehensive error handling with specific exception types
 for different failure scenarios, enabling precise error handling and debugging.
@@ -14,16 +14,19 @@ from typing import Any
 
 
 class BulkUpsertHelpersError(Exception):
-    """Base exception for all bulk-upsert-helpers errors."""
+    """Base exception for all bulk - upsert - helpers errors."""
 
     def __init__(
-        self, message: str, details: dict[str, Any] | None = None, suggestion: str | None = None
+        self,
+        message: str,
+        details: dict[str, Any] | None = None,
+        suggestion: str | None = None,
     ) -> None:
         """
         Initialize the exception with detailed error information.
 
         Args:
-            message: Human-readable error message
+            message: Human - readable error message
             details: Additional error context and debugging information
             suggestion: Suggested solution or next steps
         """
@@ -53,7 +56,7 @@ class ValidationError(BulkUpsertHelpersError):
         self, field: str, value: Any, expected: str, suggestion: str | None = None
     ) -> None:
         """
-        Initialize validation error with field-specific information.
+        Initialize validation error with field - specific information.
 
         Args:
             field: Name of the field that failed validation
@@ -72,7 +75,9 @@ class ValidationError(BulkUpsertHelpersError):
 class ConfigurationError(BulkUpsertHelpersError):
     """Raised when configuration is invalid or missing."""
 
-    def __init__(self, config_key: str, issue: str, suggestion: str | None = None) -> None:
+    def __init__(
+        self, config_key: str, issue: str, suggestion: str | None = None
+    ) -> None:
         """
         Initialize configuration error.
 
@@ -137,7 +142,11 @@ class OperationError(BulkUpsertHelpersError):
             suggestion: How to resolve the operation failure
         """
         message = f"Operation '{operation}' failed: {reason}"
-        details = {"operation": operation, "reason": reason, "retry_possible": retry_possible}
+        details = {
+            "operation": operation,
+            "reason": reason,
+            "retry_possible": retry_possible,
+        }
         super().__init__(message, details, suggestion)
         self.operation = operation
         self.reason = reason
